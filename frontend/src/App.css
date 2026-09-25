@@ -1945,7 +1945,7 @@ a {
 }
 
 .fc-prereq-list li::before {
-  content: '\u2022';
+  content: '\2022';
   position: absolute;
   left: 0;
   color: var(--accent);
@@ -2457,7 +2457,7 @@ input:disabled {
 }
 
 .function-intel-list li::before {
-  content: '\u2022';
+  content: '\2022';
   position: absolute;
   left: 0;
   color: var(--accent-dim);
@@ -3349,7 +3349,7 @@ input:disabled {
 }
 
 .cs-verify-card li::before {
-  content: '\u2022';
+  content: '\2022';
   position: absolute;
   left: 0;
   color: var(--accent-dim);
@@ -3491,7 +3491,7 @@ button:active:not(:disabled) {
 }
 
 .repo-health-test-area::before {
-  content: '\u2022';
+  content: '\2022';
   position: absolute;
   left: 0;
   color: var(--accent-dim);
@@ -5450,7 +5450,7 @@ button:active:not(:disabled) {
 }
 
 .task-nav-verify-list li::before {
-  content: '\u2022';
+  content: '\2022';
   position: absolute;
   left: 0;
   color: var(--accent-dim);
