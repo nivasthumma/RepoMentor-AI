@@ -30,11 +30,20 @@ export default function AIExplanationPanel({
 }) {
   const [typedInput, setTypedInput] = useState('');
   const [evidenceExpanded, setEvidenceExpanded] = useState({});
+  const [validationError, setValidationError] = useState(null);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     const trimmed = typedInput.trim();
-    if (!trimmed) return;
+    if (!trimmed) {
+      setValidationError(null);
+      return;
+    }
+    if (trimmed.length > 1000) {
+      setValidationError('Question too long. Please use fewer than 1000 characters.');
+      return;
+    }
+    setValidationError(null);
     onInvestigationQuestion(trimmed);
     setTypedInput('');
   };
@@ -375,6 +384,10 @@ export default function AIExplanationPanel({
             ))}
           </div>
         </div>
+      )}
+
+      {validationError && (
+        <p className="ai-error" role="alert">{validationError}</p>
       )}
 
       <form className="ai-typed-form" onSubmit={handleSubmit}>

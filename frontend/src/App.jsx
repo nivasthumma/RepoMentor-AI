@@ -322,8 +322,10 @@ export default function App() {
 
     const lower = question.toLowerCase().trim();
 
+    const contextValid = lastInvestigationContext && followUps && followUps[lastInvestigationContext];
+
     if (lower === 'what happens after' || lower.startsWith('what happens after')) {
-      if (lastInvestigationContext && followUps[lastInvestigationContext]) {
+      if (contextValid) {
         const context = followUps[lastInvestigationContext];
         const answer = context['what happens after'] || 'No follow-up data available for this context.';
         setInvestigationHistory((prev) => [...prev.slice(-9), { question, answer, isFollowUp: true }]);
@@ -334,7 +336,7 @@ export default function App() {
     }
 
     if (lower === 'what happens before' || lower.startsWith('what happens before')) {
-      if (lastInvestigationContext && followUps[lastInvestigationContext]) {
+      if (contextValid) {
         const context = followUps[lastInvestigationContext];
         const answer = context['what happens before'] || 'No follow-up data available for this context.';
         setInvestigationHistory((prev) => [...prev.slice(-9), { question, answer, isFollowUp: true }]);
