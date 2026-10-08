@@ -1,0 +1,57 @@
+name: VoxPilot task
+run-name: VoxPilot task ${{ inputs.task_id }}
+on:
+  workflow_dispatch:
+    inputs:
+      task_id:
+        required: true
+        type: string
+      directory:
+        required: true
+        default: '.'
+        type: string
+      goal:
+        required: true
+        type: string
+      auto_fix:
+        required: true
+        default: 'false'
+        type: string
+      create_pr:
+        required: true
+        default: 'false'
+        type: string
+permissions:
+  contents: read
+jobs:
+  execute:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Execute and verify VoxPilot task
+        env:
+          VOXPILOT_RUNNER_MAIN: 'true'
+          VOXPILOT_RESULT_PATH: ${{ runner.temp }}/voxpilot-result.json
+          TASK_ID: ${{ inputs.task_id }}
+          TASK_GOAL: ${{ inputs.goal }}
+          TASK_DIRECTORY: ${{ inputs.directory }}
+          AUTO_FIX: ${{ inputs.auto_fix }}
+          CREATE_PR: ${{ inputs.create_pr }}
+          REPAIR_API_KEY: ${{ secrets.VOXPILOT_REPAIR_KEY }}
+          REPAIR_PROVIDER: ${{ secrets.VOXPILOT_REPAIR_PROVIDER }}
+          REPAIR_MODEL: ${{ secrets.VOXPILOT_REPAIR_MODEL }}
+          VOXPILOT_GITHUB_TOKEN: ${{ secrets.VOXPILOT_PR_TOKEN }}
+        run: node .github/voxpilot/runner-v2.mjs
+      - name: Save result evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: voxpilot-${{ inputs.task_id }}
+          path: ${{ runner.temp }}/voxpilot-result.json
+          retention-days: 7
