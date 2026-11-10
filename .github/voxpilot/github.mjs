@@ -1,7 +1,7 @@
 // Caller supplies a persisted task ID and exact repository scope. No blind write retries.
 export async function prepareDraft({repository,baseSha,taskId,goal,files,signal,request=fetch,token=process.env.VOXPILOT_GITHUB_TOKEN}) {
  if(!token)throw Error('GitHub token is not configured');
- if(!/^[\w.-]+\/[\w.-]+$/.test(repository))throw Error('Invalid GitHub repository');
+ if(!/^[\w.-]+\/[\w.-]+$/.test(repository)||repository.split('/').some(part=>/^\.+$/.test(part)))throw Error('Invalid GitHub repository');
  if(!/^[a-f\d]{40}$/.test(baseSha)||!/^[\w-]+$/.test(taskId))throw Error('Invalid revision or task ID');
  const branch='voxpilot/'+taskId;
  async function api(path,method='GET',body){
@@ -10,10 +10,12 @@ export async function prepareDraft({repository,baseSha,taskId,goal,files,signal,
   if(!response.ok){const error=Error('GitHub request failed ('+response.status+')');error.status=response.status;throw error;}
   return response.json();
  }
- const existing=await api('/pulls?state=all&head='+encodeURIComponent(repository.split('/')[0]+':'+branch));
+ // Only an open draft is reused; a closed PR or leftover branch must not be silently resurrected.
+ const existing=await api('/pulls?state=open&head='+encodeURIComponent(repository.split('/')[0]+':'+branch));
  if(existing.length)return {url:existing[0].html_url,number:existing[0].number,reused:true};
  let ref;try{ref=await api('/git/ref/heads/'+branch);}catch(e){if(e.status!==404)throw e;}
- if(!ref){
+ if(ref)throw Error('Branch '+branch+' already exists without an open pull request. Delete it or start a new task.');
+ {
   const base=await api('/git/commits/'+baseSha);
   const tree=[];
   for(const file of files){
@@ -29,6 +31,6 @@ export async function prepareDraft({repository,baseSha,taskId,goal,files,signal,
  // Verify the target branch still includes the inspected base; never silently target unrelated history.
  const comparison=await api('/compare/'+baseSha+'...'+repositoryInfo.default_branch);
  if(!['identical','ahead'].includes(comparison.status))throw Error('Default branch diverged from inspected revision');
- const pr=await api('/pulls','POST',{title:goal.slice(0,200),head:branch,base:repositoryInfo.default_branch,draft:true,body:'Verified by VoxPilot task '+taskId+'.\n\nNode.js tests passed in a detached checkout before this draft was prepared.'});
+ const pr=await api('/pulls','POST',{title:goal.slice(0,200),head:branch,base:repositoryInfo.default_branch,draft:true,body:'Verified by VoxPilot task '+taskId+'.\n\nThe repository tests passed on these changes in an isolated checkout before this draft was prepared. Review the diff before merging.'});
  return {url:pr.html_url,number:pr.number,reused:false};
 }

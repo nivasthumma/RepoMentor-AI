@@ -38,6 +38,7 @@ jobs:
         env:
           VOXPILOT_RUNNER_MAIN: 'true'
           VOXPILOT_RESULT_PATH: ${{ runner.temp }}/voxpilot-result.json
+          VOXPILOT_PUBLISH_PATH: ${{ runner.temp }}/voxpilot-publish.json
           TASK_ID: ${{ inputs.task_id }}
           TASK_GOAL: ${{ inputs.goal }}
           TASK_DIRECTORY: ${{ inputs.directory }}
@@ -46,8 +47,24 @@ jobs:
           REPAIR_API_KEY: ${{ secrets.VOXPILOT_REPAIR_KEY }}
           REPAIR_PROVIDER: ${{ secrets.VOXPILOT_REPAIR_PROVIDER }}
           REPAIR_MODEL: ${{ secrets.VOXPILOT_REPAIR_MODEL }}
-          VOXPILOT_GITHUB_TOKEN: ${{ secrets.VOXPILOT_PR_TOKEN }}
         run: node .github/voxpilot/runner-v2.mjs
+      - name: Publish verified draft PR
+        if: success() && inputs.create_pr == 'true'
+        env:
+          VOXPILOT_RUNNER_MAIN: 'true'
+          VOXPILOT_RUNNER_MODE: publish
+          VOXPILOT_RESULT_PATH: ${{ runner.temp }}/voxpilot-result.json
+          VOXPILOT_PUBLISH_PATH: ${{ runner.temp }}/voxpilot-publish.json
+          TASK_ID: ${{ inputs.task_id }}
+          TASK_GOAL: ${{ inputs.goal }}
+          VOXPILOT_GITHUB_TOKEN: ${{ secrets.VOXPILOT_PR_TOKEN }}
+          NODE_OPTIONS: ''
+        run: |
+          publisher="$RUNNER_TEMP/voxpilot-publisher"
+          mkdir -p "$publisher"
+          git show HEAD:.github/voxpilot/runner-v2.mjs > "$publisher/runner-v2.mjs"
+          git show HEAD:.github/voxpilot/github.mjs > "$publisher/github.mjs"
+          node "$publisher/runner-v2.mjs"
       - name: Save result evidence
         if: always()
         uses: actions/upload-artifact@v4
